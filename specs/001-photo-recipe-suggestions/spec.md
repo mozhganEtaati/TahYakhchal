@@ -16,6 +16,14 @@
 - Q: Should each suggested recipe also list which of the spotted ingredients it uses, or show only a title and cooking steps? → A: Title, then the list of spotted ingredients that recipe uses, then the steps — no quantities.
 - Q: How long may the app keep the user waiting after they submit photos before it gives up and shows the friendly failure message? → A: 30 seconds, then show the failure message with a retry.
 
+### Session 2026-09-09 (design amendment)
+
+Design mockups introduced three screens, manual ingredient entry, ingredient correction, a
+dark theme, and saved recipes. Two decisions were required before amending:
+
+- Q: How should saved recipes (ذخیره‌شده‌ها) survive? → A: Browser `localStorage` — no database, no server-side session, no account. FR-013 is amended with an explicit carve-out and the justification Principle III requires.
+- Q: How much of the mockups should land in this amendment? → A: All three screens: home, my-ingredients, and saved.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Get recipes from a photo of what I have (Priority: P1)
@@ -101,6 +109,81 @@ and that the user can immediately try another photo.
 
 ---
 
+### User Story 4 - Tell the app what I have without a photo (Priority: P2)
+
+The cook does not want to photograph anything — they already know what is in the fridge.
+They type ingredients in, or tap the common ones offered on the home screen, and ask for
+recipes from that list alone.
+
+**Why this priority**: It removes the app's hardest precondition (good lighting, a tidy
+fridge, a phone in hand) and makes the demo work even with no camera. It rides on the same
+suggestion path as P1, so it is cheap once P1 exists.
+
+**Independent Test**: With no photo selected, tap two quick-start chips and type one more
+ingredient, then ask for recipes and confirm suggestions come back.
+
+**Acceptance Scenarios**:
+
+1. **Given** a user on the home screen with no photos, **When** they tap two common
+   ingredient chips and submit, **Then** the app returns recipes built from those
+   ingredients.
+2. **Given** a user with one photo selected, **When** they also type an ingredient the
+   photo does not show, **Then** the request carries both and the suggestions may use
+   either.
+3. **Given** a user with no photos and no typed ingredients, **When** they look at the
+   submit control, **Then** it is unavailable until they add at least one of the two.
+
+---
+
+### User Story 5 - Fix what the app got wrong (Priority: P2)
+
+The app reports what it saw. The cook spots a mistake — a cucumber read as a zucchini, an
+item that is not really there, something it missed — and corrects the list before asking
+for recipes.
+
+**Why this priority**: Recognition will be wrong sometimes, and a cook who cannot correct
+it either gets a useless recipe or loses trust in the whole app. It also turns a failed
+recognition into a recoverable moment instead of a dead end.
+
+**Independent Test**: After a recognition run, rename one ingredient, delete another, add a
+third, then ask for recipes and confirm the suggestions reflect the corrected list.
+
+**Acceptance Scenarios**:
+
+1. **Given** a list of recognized ingredients on screen, **When** the user renames one,
+   **Then** the new name is what recipes are built from.
+2. **Given** the same list, **When** the user removes an item, **Then** it no longer
+   appears and no suggested recipe uses it.
+3. **Given** the corrected list has fewer than 2 non-staple ingredients, **When** the user
+   asks for recipes, **Then** the app shows the friendly "not enough ingredients" message
+   rather than guessing.
+
+---
+
+### User Story 6 - Keep a recipe for later (Priority: P3)
+
+The cook likes a suggestion but is not cooking it right now. They save it, and it is
+waiting on the saved screen the next time they open the app on that browser.
+
+**Why this priority**: It is the only part of the app that outlives a visit, and it is
+useful only once suggestions exist — so it comes last.
+
+**Independent Test**: Save a recipe, reload the page, open the saved screen, and confirm the
+recipe is still there with its title, ingredients, and steps.
+
+**Acceptance Scenarios**:
+
+1. **Given** a suggested recipe on screen, **When** the user taps its save control, **Then**
+   the recipe appears on the saved screen and the control shows it as saved.
+2. **Given** a saved recipe, **When** the user reloads the page or returns later in the same
+   browser, **Then** the recipe is still on the saved screen.
+3. **Given** a saved recipe, **When** the user removes it from saved, **Then** it disappears
+   from the saved screen and does not return on reload.
+4. **Given** nothing has been saved, **When** the user opens the saved screen, **Then** a
+   friendly Persian empty state invites them to go look at suggestions.
+
+---
+
 ### Edge Cases
 
 - Photos are submitted but the recognition service is unreachable, times out, or returns
@@ -128,8 +211,10 @@ and that the user can immediately try another photo.
 
 ### Functional Requirements
 
-- **FR-001**: The app MUST let a user select and submit between 1 and 3 photos in a
-  single request, and MUST prevent submission of 0 photos or more than 3.
+- **FR-001**: The app MUST let a user select and submit up to 3 photos in a single
+  request, and MUST prevent submission of more than 3. A request MUST carry at least one
+  photo **or** at least one manually entered ingredient (FR-017); a request with neither
+  MUST be prevented.
 - **FR-002**: The app MUST let a user remove an individual selected photo before
   submitting.
 - **FR-003**: The app MUST identify the food items and ingredients visible across all
@@ -163,12 +248,43 @@ and that the user can immediately try another photo.
   FR-011 failure message with a retry option; it MUST NOT leave the processing state
   running past that ceiling.
 - **FR-012**: The app MUST NOT require login, account creation, or any user identity.
-- **FR-013**: The app MUST NOT persist photos, recognized ingredients, or suggestions
-  beyond the request that produced them; each visit MUST start from an empty state and
-  past suggestions MUST NOT be retrievable after leaving or reloading the page.
+- **FR-013**: The app MUST NOT persist photos anywhere, and MUST NOT persist recognized
+  ingredients or suggestions server-side. No database, no file storage, no server-side
+  cache, and no server-side session may be introduced.
+- **FR-013a**: As the single exception to FR-013, the app MUST store, in the viewer's own
+  browser only, exactly two things:
+  - **Saved recipes** — recipes the user explicitly saved via the save control (FR-020).
+    Stored: recipe title, its ingredient names, and its steps. Why: the saved screen's
+    entire purpose is to keep a dish for a later cooking session, which is worthless if it
+    vanishes on reload. How long: until the user removes it or clears their browser data.
+  - **Theme preference** — light or dark (FR-022). Why: a theme that resets on every visit
+    reads as a bug. How long: same as above.
+
+  Nothing else may be stored. Photos, the working ingredient list, and unsaved suggestions
+  MUST still be gone after a reload. The store MUST be per-browser: it MUST NOT reach a
+  server, another device, or another visitor.
 - **FR-014**: The app MUST reject files that are not supported images or that exceed the
   size limit, with a Persian explanation, before submission.
 - **FR-015**: The app MUST be usable on both mobile and desktop browser viewports.
+- **FR-016**: The credential used to reach the external AI service MUST remain server-side
+  only. It MUST NOT appear in anything delivered to the browser, in any response body, or
+  in any message shown to the user.
+- **FR-017**: The app MUST let a user add ingredients by typing them, without any photo,
+  and MUST accept a request built from typed ingredients alone.
+- **FR-018**: The app MUST show the recognized ingredients back to the user and let them
+  correct the list before asking for recipes: rename an item, remove an item, and add one.
+  The corrected list, not the raw recognition, MUST be what recipes are built from.
+- **FR-019**: The app MUST offer a set of one-tap common ingredients on the home screen
+  that add themselves to the ingredient list when tapped.
+- **FR-020**: The app MUST let a user save a suggested recipe and later remove it from
+  saved, and MUST show saved recipes on their own screen. Saving MUST be an explicit user
+  action — never automatic.
+- **FR-021**: The app MUST provide navigation between three screens — home, my
+  ingredients, and saved — with the current screen indicated.
+- **FR-022**: The app MUST default to a dark theme, MUST offer a control to switch between
+  dark and light, and MUST remember the choice for that browser.
+- **FR-023**: Every screen MUST show a friendly Persian empty state when it has nothing to
+  display, with a control leading to the next useful action.
 
 ### Key Entities
 
@@ -179,7 +295,16 @@ and that the user can immediately try another photo.
   request.
 - **Recipe Suggestion**: One proposed dish returned for a submission. Has a Persian
   title, the subset of Recognized Ingredients it uses (names only, no quantities), and
-  an ordered list of Persian instruction steps. Exists only in the displayed result.
+  an ordered list of Persian instruction steps. Exists only in the displayed result unless
+  the user saves it.
+- **Ingredient List**: The working set of ingredients a request is built from. Assembled
+  from three sources — recognized from photos, typed by the user, tapped from the common
+  chips — and freely editable by the user (FR-018). Lives only in the current visit.
+- **Saved Recipe**: A Recipe Suggestion the user explicitly kept (FR-020). Holds the same
+  title, ingredients, and steps, plus the time it was saved. Stored in the viewer's own
+  browser per FR-013a; never sent to a server.
+- **Theme Preference**: Dark or light (FR-022). One value, stored in the viewer's own
+  browser per FR-013a.
 
 ## Success Criteria *(mandatory)*
 
@@ -202,6 +327,14 @@ and that the user can immediately try another photo.
   results or a friendly failure message appears.
 - **SC-007**: The primary flow is completable on both a common mobile viewport and a
   common desktop viewport, with no horizontal scrolling or clipped controls.
+- **SC-009**: A user with no camera photo can reach recipe suggestions using typed and
+  tapped ingredients alone, in under 60 seconds.
+- **SC-010**: A correction the user makes to the ingredient list is reflected in 100% of
+  subsequent suggestions; a removed ingredient appears in 0% of them.
+- **SC-011**: A saved recipe survives a page reload and a browser restart on the same
+  browser in 100% of cases; it appears on no other browser or device.
+- **SC-012**: After a reload, unsaved suggestions, selected photos, and the working
+  ingredient list are all gone in 100% of cases.
 
 ## Assumptions
 
@@ -223,3 +356,11 @@ and that the user can immediately try another photo.
 - No analytics, tracking, or user-identifying data is collected, consistent with the
   no-login, no-history constraint.
 - Users have a working internet connection; offline use is out of scope.
+- The home screen carries a decorative cook figure beside the headline. It is presentation
+  only — it conveys no information, is hidden from assistive technology, and no requirement
+  depends on it. Recorded here so its presence is traceable rather than untracked.
+- **Environment constraint discovered in testing**: Google blocks the Gemini API from some
+  regions, returning `User location is not supported for the API use.` for every model. The
+  key and request are valid; the app degrades correctly (friendly Persian failure per
+  FR-011), but running the live flow from a blocked region needs a VPN or proxy. See
+  `research.md` §3.

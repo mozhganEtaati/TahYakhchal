@@ -1,23 +1,3 @@
-<!--
-Sync Impact Report
-- Version change: none (unratified template) → 1.0.0 → 1.0.1
-- Modified principles:
-  - [PRINCIPLE_1_NAME] → I. Minimal Surface Area (NON-NEGOTIABLE)
-  - [PRINCIPLE_2_NAME] → II. External-Service-First for Non-Core Capabilities
-  - [PRINCIPLE_3_NAME] → III. No Persistence Without Justification
-  - [PRINCIPLE_4_NAME] → IV. Contract Stability Across Features
-- Added sections:
-  - Quality & Reliability Constraints (from [SECTION_2_NAME])
-  - Development Workflow & Quality Gates (from [SECTION_3_NAME])
-  - Governance (rules filled in)
-- Removed sections:
-  - [PRINCIPLE_5_NAME] / [PRINCIPLE_5_DESCRIPTION] — user supplied exactly four principles
-- Follow-up TODOs: none
-- 1.0.1: Principle III "No implicit storage" reworded — "No X MUST be introduced"
-  read as a double negative; now "X MUST NOT be introduced". No semantic change.
-- Note: this report is scratch material for amendment review; remove before commit.
--->
-
 # TahYakhchal Constitution
 
 ## Core Principles

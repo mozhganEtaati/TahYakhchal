@@ -1,0 +1,141 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/estedad/index.css";
+@import "@fontsource/lalezar/arabic-400.css";
+@import "@fontsource/lalezar/400.css";
+
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+/*
+  ته‌یخچال — "the bottom of the fridge".
+  Cold blue dark (not tinted black), lime for action, mint for wayfinding,
+  saffron reserved for food itself.
+*/
+
+@theme inline {
+  --font-display: "Lalezar", "Estedad Variable", Tahoma, sans-serif;
+  --font-body: "Estedad Variable", "Segoe UI", Tahoma, sans-serif;
+
+  --color-shab: var(--shab);
+  --color-taaqche: var(--taaqche);
+  --color-taaqche-2: var(--taaqche-2);
+  --color-limu: var(--limu);
+  --color-nana: var(--nana);
+  --color-zaferan: var(--zaferan);
+  --color-barf: var(--barf);
+  --color-mist: var(--mist);
+  --color-hairline: var(--hairline);
+
+  --color-background: var(--shab);
+  --color-foreground: var(--barf);
+  --color-card: var(--taaqche);
+  --color-card-foreground: var(--barf);
+  --color-primary: var(--limu);
+  --color-primary-foreground: var(--shab);
+  --color-secondary: var(--taaqche-2);
+  --color-secondary-foreground: var(--barf);
+  --color-muted: var(--taaqche-2);
+  --color-muted-foreground: var(--mist);
+  --color-accent: var(--nana);
+  --color-accent-foreground: var(--shab);
+  --color-destructive: var(--danger);
+  --color-border: var(--hairline);
+  --color-input: var(--hairline);
+  --color-ring: var(--nana);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 2rem;
+}
+
+:root,
+[data-theme="dark"] {
+  --shab: #0c1626;
+  --taaqche: #14203a;
+  --taaqche-2: #1b2b4a;
+  --limu: #d6ea3c;
+  --nana: #4fd1c5;
+  --zaferan: #f0a93a;
+  --barf: #eaf0fa;
+  --mist: #8ea0c0;
+  --hairline: #243352;
+  --danger: #ff8f83;
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --shab: #f6f7fb;
+  --taaqche: #ffffff;
+  --taaqche-2: #eef1f8;
+  --limu: #b9cf1c;
+  --nana: #128a80;
+  --zaferan: #b9741a;
+  --barf: #0c1626;
+  --mist: #55617c;
+  --hairline: #dde2ee;
+  --danger: #b83a2c;
+  color-scheme: light;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    background-color: var(--shab);
+    color: var(--barf);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.85;
+    min-height: 100dvh;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Lalezar has one weight; never let the browser fake a bolder one. */
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  ::selection {
+    background: var(--nana);
+    color: var(--shab);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--nana);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* The cold glow of an open fridge door, behind the hero only. */
+  .fridge-light {
+    background:
+      radial-gradient(120% 80% at 85% -10%, color-mix(in oklab, var(--nana) 16%, transparent), transparent 60%),
+      radial-gradient(90% 60% at 10% 0%, color-mix(in oklab, var(--limu) 8%, transparent), transparent 55%);
+  }
+
+  .shelf-line {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--nana) 45%, transparent),
+      transparent
+    );
+  }
+}
