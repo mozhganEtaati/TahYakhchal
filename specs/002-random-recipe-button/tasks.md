@@ -141,3 +141,21 @@ US2 and US3 both touch `app/components/RandomDish.tsx`, so run them in sequence,
 **Increment 3**: Phase 5 (T016–T017). Saving — largely free if T010 reused the existing card path.
 
 **Close**: Phase 6 (T018–T023), ending with the full quickstart walkthrough. T021 is the one that proves this feature kept its Principle IV promise.
+
+---
+
+## Phase 7: Convergence
+
+**Purpose**: Close gaps found by `/speckit-converge` between the artifacts and the code as it currently stands. Appended 2026-09-09; existing tasks above are untouched.
+
+- [X] T024 Enforce the no-repeat rule in code, not only in the prompt: in `app/api/random/route.ts`, compare the returned `recipe.title` against the submitted `seenTitles` and handle a collision deterministically — either one bounded re-ask or an explicit documented accept — so a model that ignores the exclusion instruction cannot silently break the guarantee, per FR-104 and SC-102 (partial). Feature 001 made the same call for FR-008 and put the rule in code because prompt wording drifts; research.md §2 chose prompt-only exclusion and §4 rejected unbounded re-rolling, so keep any retry bounded to one and inside the 30-second ceiling
+- [X] T025 Announce the random flow's state changes to assistive technology in `app/components/RandomDish.tsx`: a `role="status" aria-live="polite"` region covering the processing-to-result transition, and `role="alert"` on the error, matching the pattern already established in `app/components/StatusPanel.tsx`, per Constitution "Quality: predictable AI-dependent UX" — a screen-reader user currently gets no signal that a request started or that a dish arrived (missing)
+- [X] T026 Record the `app/components/ResultList.tsx` touch-point in `specs/002-random-recipe-button/plan.md`: this feature added an optional `heading` prop so a single random dish renders through the existing card, but the plan's structure block omits the file while naming `errors.ts` and `saved.tsx` as UNTOUCHED, per plan: touch-point list (unrequested). The edit itself is correct and required by FR-102 — only its absence from the plan needs fixing, so do not revert it
+
+---
+
+## Phase 8: Convergence
+
+**Purpose**: Close the gap found by the second `/speckit-converge` run. Appended 2026-09-09; existing tasks above are untouched.
+
+- [X] T027 Share one 30-second deadline across both random-dish attempts, per contracts/random-api.md invariant 3 and FR-106 (contradicts). `lib/gemini.ts` starts a fresh `REQUEST_TIMEOUT_MS` timer inside `requestRandomDish`, so the retry added by T024 lets `app/api/random/route.ts` run for up to ~60 seconds. Thread a remaining-budget or absolute-deadline argument through `requestRandomDish`, or skip the second attempt when too little of the window is left, so the route itself honors the ceiling. Note the reason this matters beyond the number: research.md §6 chose to abort rather than ignore the call precisely so no work keeps running against the API after the user has been told it failed, and the current retry reintroduces that. Do not change the client-side guard, which already caps the user's wait correctly

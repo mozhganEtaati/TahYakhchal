@@ -108,18 +108,35 @@ function logUpstreamDiagnosis(error: unknown, model: string) {
  * Feature 002 — one random dish, avoiding titles already seen this visit.
  * Temperature is raised for this call only: at the default the model returns the
  * same handful of well-known dishes and the second press would repeat (research.md §2).
+ *
+ * `deadline` is an absolute epoch-ms cutoff shared across every attempt in one request,
+ * so a retry cannot buy itself a second full window — the route must still answer inside
+ * 30 seconds (contracts/random-api.md invariant 3). Omit it for a single-attempt call.
  */
-export async function requestRandomDish(seenTitles: string[] = []): Promise<string> {
+export async function requestRandomDish(
+  seenTitles: string[] = [],
+  deadline?: number,
+): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not set");
+  }
+
+  const remaining =
+    deadline === undefined ? REQUEST_TIMEOUT_MS : deadline - Date.now();
+
+  // Already out of budget: fail as a timeout rather than starting a call that
+  // would outlive the request (research.md §6 — no work left running after the
+  // user has been told it failed).
+  if (remaining <= 0) {
+    throw new GeminiTimeoutError();
   }
 
   const ai = new GoogleGenAI({ apiKey });
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), remaining);
 
   try {
     const response = await ai.models.generateContent({

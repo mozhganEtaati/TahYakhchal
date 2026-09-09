@@ -88,7 +88,11 @@ Additions and edits only; everything else in the tree is untouched.
 app/
 ├── page.tsx                    # EDIT: add the random control to the home screen
 ├── components/
-│   └── RandomDish.tsx          # NEW: client control + its result, processing, error states
+│   ├── RandomDish.tsx          # NEW: client control + its result, processing, error states
+│   └── ResultList.tsx          # EDIT: optional `heading` prop so one random dish can
+│                               #   render through the existing card (FR-102, SC-107).
+│                               #   Additive with a default, so feature 001's call site
+│                               #   is unchanged.
 └── api/
     ├── suggest/route.ts        # UNTOUCHED — contract stability (Principle IV)
     └── random/
@@ -107,8 +111,10 @@ messages/
 ```
 
 **Structure Decision**: The new route sits beside the existing one rather than inside it, and
-the new component owns its own result rendering so the home screen stays a composition of
-independent parts. `lib/` gains only additive exports — nothing existing changes signature,
+the new component owns its own control and states while delegating card rendering to the
+shared `ResultList`. That delegation is deliberate: reusing the card is what makes a saved
+random dish literally the same structure as a saved ingredient-based one (SC-107), instead of
+two renderers that must be kept in sync. `lib/` gains only additive exports — nothing existing changes signature,
 which is what keeps feature 001 working untouched while this is built.
 
 ## Complexity Tracking
