@@ -101,6 +101,19 @@ export default function RandomDish() {
         </Magnet>
       </div>
 
+      {/*
+        Screen readers get no signal from a spinning icon or a changed button label,
+        so state changes are announced here. Politely, so an arriving dish does not
+        interrupt whatever the user is reading. ErrorPanel already carries role="alert".
+      */}
+      <p aria-live="polite" className="sr-only">
+        {busy
+          ? fa.random.processing
+          : randomStatus === "done" && randomRecipe
+            ? `${fa.resultsHeading}: ${randomRecipe.title}`
+            : ""}
+      </p>
+
       <AnimatePresence mode="wait">
         {randomStatus === "error" && randomErrorCode && (
           <motion.div
